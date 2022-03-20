@@ -102,14 +102,14 @@ tomorrowafternoonwind = paste(p4_2[7,8],p4_2[6,8],sep=" - ")
 # For this website, the numbers in the first three columns of the first table after the "ADI Early" and "ADI Late" rows will be scraped
 # These consist of a number and a description
 
-page4<-read_html("https://forecast.weather.gov/product.php?site=NWS&product=FWF&issuedby=PBZ") # Read in website link
+page4<-read_html("https://forecast.weather.gov/product.php?site=NWS&issuedby=PBZ&product=FWF&format=CI&version=2&glossary=0") # Read in website link
 table4<-page4 %>% # Select the node containing the data, in  this case, all of the tables on the site will be scraped at once
   html_nodes(".glossaryProduct") %>%
   html_text()
 adiearly<-str_extract(table4,'ADI\\searly.{1,}') # Extract ADI Early row from the first table
 adilate<-str_extract(table4,'ADI\\slate.{1,}') # Extract ADI Late row from the first table
 # ADI Early
-adiearlysplit<-str_extract_all(adiearly,'\\d{1,2}\\s.{1,10}') # Split the row into each number-description pair
+adiearlysplit<-str_extract_all(adiearly,'\\d{1,2}\\s.{1,9}') # Split the row into each number-description pair
 adiearlytoday<-trimws(adiearlysplit[[1]][1],whitespace=" ") # First pair is the "today" column, take the pair and remove any spaces before and after the text
 aetodvalue<-str_extract(adiearlytoday,'\\d{1,2}') # Extracts just the number from the today pair
 aetoddesc<-str_extract(adiearlytoday,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}')) # Extracts the description after the today pair
@@ -121,7 +121,7 @@ aetomvalue<-str_extract(adiearlytomorrow,'\\d{1,2}') # Extracts just the number 
 aetomdesc<-str_extract(adiearlytomorrow,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}')) # Extracts the description after the tonight pair
 
 # ADI Late
-adilatesplit<-str_extract_all(adilate,'\\d{1,2}\\s.{1,10}') # Code here is identical to the ADI Early code, process is the same as above
+adilatesplit<-str_extract_all(adilate,'\\d{1,2}\\s.{1,9}') # Code here is identical to the ADI Early code, process is the same as above
 adilatetoday<-trimws(adilatesplit[[1]][1],whitespace=" ")
 altodvalue<-str_extract(adilatetoday,'\\d{1,2}')
 altoddesc<-str_extract(adilatetoday,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}'))
