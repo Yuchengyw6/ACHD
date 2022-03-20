@@ -11,22 +11,29 @@ library(lubridate)
 library(stringr)
 library(jsonlite)
 
-# webscraping processes
+# 1, webscraping processes
+# webscraping with rvest package, some regular expressions are used.
+#
 # website 1
-
-webpage1_1 <- read_html("http://feeds.airnowapi.org/rss/forecast/113.xml")
+# For website 1, AQI information(today, tomorrow) for Pittsburgh area and Liberty-Clairton area are scarped.
+# The content of the website would be updated at ___ everyday, and does not change until next update.
+# The source of the websites is the api of airnow.
+#
+webpage1_1 <- read_html("http://feeds.airnowapi.org/rss/forecast/113.xml") # read the website, AQI of Pittsburgh Area
 pitt = webpage1_1 %>%
-  html_nodes("body") %>%
-  html_text()
-todaypitt=str_extract(pitt,"(?<=Today).*?(?=AQI)")
-todaypitt=strsplit(todaypitt,"-")
-todaypitt=strsplit(todaypitt[[1]][2]," ")
-todaypitt=todaypitt[[1]][2]
-tomorrowpitt=str_extract(pitt,"(?<=Tomorrow).*?(?=AQI)")
+  html_nodes("body") %>% # read the body of the website
+  html_text() # extract the text from the website
+todaypitt=str_extract(pitt,"(?<=Today).*?(?=AQI)") # extract the string start by Today and end by AQI(e.g.: Today, 03/20/2022: Good - 37 AQI)
+todaypitt=strsplit(todaypitt,"-") # split the string by "-"
+todaypitt=strsplit(todaypitt[[1]][2]," ") # split again by " "
+todaypitt=todaypitt[[1]][2] # select the value of AQI(e.g.: 37)
+
+tomorrowpitt=str_extract(pitt,"(?<=Tomorrow).*?(?=AQI)") # same process, but extracting the AQI of tomorrow.
 tomorrowpitt=strsplit(tomorrowpitt,"-")
 tomorrowpitt=strsplit(tomorrowpitt[[1]][2]," ")
 tomorrowpitt=tomorrowpitt[[1]][2]
-webpage1_2 <- read_html("http://feeds.airnowapi.org/rss/forecast/352.xml")
+ # scrape AQI of Liberty-Clairton Area, using the same process above.
+webpage1_2 <- read_html("http://feeds.airnowapi.org/rss/forecast/352.xml") 
 LC = webpage1_2 %>%
   html_nodes("body") %>%
   html_text()
@@ -41,60 +48,73 @@ tomorrowLC=tomorrowLC[[1]][2]
 
 
 # website 2
-webpage2 <- read_html("https://www.ahs.dep.pa.gov/AQPartnersWeb/forecast.aspx?vargroup=sw")
+#
+# For this website, we scraped the Discussion part from the report "Southwest Ozone/PM2.5 Forecast", in our report
+# it is the content in "Today's Forecast" section.
+# The content of the website would be updated at ___ everyday, and does not change until next update.
+# The source of the website is the Pennsylvania Department of Environmental Protection.
+# 
+webpage2 <- read_html("https://www.ahs.dep.pa.gov/AQPartnersWeb/forecast.aspx?vargroup=sw") # read the webpage
 todayforecast <- webpage2 %>%
   html_nodes("body form div div div div div div") %>%
-  html_text()
-head(todayforecast)
+  html_text() # obtain all the information of today forecast in text form
 discriptions = todayforecast[1]
-todayforecast = todayforecast[2]
-todayforecast = strsplit(todayforecast, "\r\n")
+todayforecast = todayforecast[2] # this is the content we need
+todayforecast = strsplit(todayforecast, "\r\n") # removing the irrelevant expression "\r\n"
 todayforecast = todayforecast[[1]][2]
-todayforecast = gsub("  ","",todayforecast)
+todayforecast = gsub("  ","",todayforecast) # removing extra space
 
 # website 3
-# 09,15,21,0,9,15
-webpage4 <- read_html("https://forecast.weather.gov/MapClick.php?lat=40.427&lon=-80.0107&lg=english&&FcstType=digital")
-date = as.character(Sys.Date())
-date = strsplit(date,"-")
-date = paste(date[[1]][2],date[[1]][3],sep="/")
-p2 <- webpage4 %>%
+# 
+# The wind direction and speed information is obtained from this website.
+# The source is National Weather Service Forecast office.
+# The content in this website updates every hour, and only contains the information in the future.
+# Better be scraped in a fixed time daily(e.g.: 8:30 am)
+# 
+webpage4 <- read_html("https://forecast.weather.gov/MapClick.php?lat=40.427&lon=-80.0107&lg=english&&FcstType=digital") # read the website
+date = as.character(Sys.Date()) # read system date
+date = strsplit(date,"-")# split the sysem time and get the date
+date = paste(date[[1]][2],date[[1]][3],sep="/") # reformat the date
+p2 <- webpage4 %>% # scarpe the table in the website
   html_nodes(xpath="/html/body/table[6]/tr/td") %>%
   html_text()
-p2 = p2[-c(1,402)]
-dim(p2) = c(25,32)
-p2 = t(p2)
+p2 = p2[-c(1,402)] # removing irrelevant entries
+dim(p2) = c(25,32) # reshape the table
+p2 = t(p2) # transpose the table
 booldate = FALSE
 if(p2[1,2]==date){
   booldate = TRUE
 }
-time = as.numeric(p2[2,2])# this time need to be <=9, which means this code should be run before 9am everyday
+time = as.numeric(p2[2,2])# this time need to be <=9, which means this code should be run around 8:30 am everyday
 todaymorningwind = "--"
 todayafternoonwind = "--"
 todayeveningwind = "--"
 todayovernightwind = "--"
 tomorrowmorningwind = "--"
 tomorrowafternoonwind = "--"
-web4_1 = paste("https://forecast.weather.gov/MapClick.php?w0=t&w1=td&w2=wc&w3=sfcwind&w3u=1&w4=sky&w5=pop&w6=rh&w7=rain&w8=thunder&w9=snow&w10=fzg&w11=sleet&w13u=0&w16u=1&w17u=1&AheadHour=",9-time+15+9,"&Submit=Submit&FcstType=digital&textField1=40.427&textField2=-80.0107&site=all&unit=0&dd=&bw=",sep="")
-web4_2 = paste("https://forecast.weather.gov/MapClick.php?w0=t&w1=td&w2=wc&w3=sfcwind&w3u=1&w4=sky&w5=pop&w6=rh&w7=rain&w8=thunder&w9=snow&w10=fzg&w11=sleet&w13u=0&w16u=1&w17u=1&AheadHour=",9-time+24+15+9,"&Submit=Submit&FcstType=digital&textField1=40.427&textField2=-80.0107&site=all&unit=0&dd=&bw=",sep="")
+# read the table from the websites with different url, so that we can get the table today and tomorrow
+web4_1 = paste("https://forecast.weather.gov/MapClick.php?w0=t&w1=td&w2=wc&w3=sfcwind&w3u=1&w4=sky&w5=pop&w6=rh&w7=rain&w8=thunder&w9=snow&w10=fzg&w11=sleet&w13u=0&w16u=1&w17u=1&AheadHour=",0,"&Submit=Submit&FcstType=digital&textField1=40.427&textField2=-80.0107&site=all&unit=0&dd=&bw=",sep="")
+web4_2 = paste("https://forecast.weather.gov/MapClick.php?w0=t&w1=td&w2=wc&w3=sfcwind&w3u=1&w4=sky&w5=pop&w6=rh&w7=rain&w8=thunder&w9=snow&w10=fzg&w11=sleet&w13u=0&w16u=1&w17u=1&AheadHour=",24,"&Submit=Submit&FcstType=digital&textField1=40.427&textField2=-80.0107&site=all&unit=0&dd=&bw=",sep="")
+# using the same way to reformat the table
 webpage4_1=read_html(web4_1)
+webpage4_2=read_html(web4_2)
 p4_1 <- webpage4_1 %>%
   html_nodes(xpath="/html/body/table[6]/tr/td") %>%
   html_text()
 p4_1 = p4_1[-c(1,402)]
 dim(p4_1) = c(25,32)
 p4_1 = t(p4_1)
-todaymorningwind = paste(p4_1[7,2],p4_1[6,2],sep=" - ")
-todayafternoonwind = paste(p4_1[7,8],p4_1[6,8],sep=" - ")
-todayeveningwind = paste(p4_1[7,14],p4_1[6,14],sep=" - ")
-todayovernightwind = paste(p4_1[7,17],p4_1[6,17],sep=" - ")
-webpage4_2=read_html(web4_2)
 p4_2 <- webpage4_2 %>%
   html_nodes(xpath="/html/body/table[6]/tr/td") %>%
   html_text()
 p4_2 = p4_2[-c(1,402)]
 dim(p4_2) = c(25,32)
 p4_2 = t(p4_2)
+# obtaining and reformatting the entries we need from the tables
+todaymorningwind = paste(p4_1[7,2],p4_1[6,2],sep=" - ")
+todayafternoonwind = paste(p4_1[7,8],p4_1[6,8],sep=" - ")
+todayeveningwind = paste(p4_1[7,14],p4_1[6,14],sep=" - ")
+todayovernightwind = paste(p4_1[7,17],p4_1[6,17],sep=" - ")
 tomorrowmorningwind = paste(p4_2[7,2],p4_2[6,2],sep=" - ")
 tomorrowafternoonwind = paste(p4_2[7,8],p4_2[6,8],sep=" - ")
 
