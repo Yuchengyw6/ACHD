@@ -102,7 +102,7 @@ tomorrowafternoonwind = paste(p4_2[7,8],p4_2[6,8],sep=" - ")
 # For this website, the numbers in the first three columns of the first table after the "ADI Early" and "ADI Late" rows will be scraped
 # These consist of a number and a description
 
-page4<-read_html("https://forecast.weather.gov/product.php?site=NWS&issuedby=PBZ&product=FWF&format=CI&version=2&glossary=0") # Read in website link
+page4<-read_html("https://forecast.weather.gov/product.php?site=NWS&product=FWF&issuedby=PBZ") # Read in website link
 table4<-page4 %>% # Select the node containing the data, in  this case, all of the tables on the site will be scraped at once
   html_nodes(".glossaryProduct") %>%
   html_text()
