@@ -422,7 +422,7 @@ ui <- fluidPage(
 
     fluidRow(
         # ADI data table
-        column(8, wellPanel(tableOutput('adi_table')),offset = 2),
+        column(8, wellPanel(DT::dataTableOutput('adi_table')),offset = 2),
         ),    
   
     # the reference links on the bottom of AQI forecast
