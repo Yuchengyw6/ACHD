@@ -396,7 +396,7 @@ ui <- fluidPage(
     
     fluidRow(
         # AQI data table
-        column(6, wellPanel(tableOutput('aqi_table'))),
+        column(6, wellPanel(DT::dataTableOutput('aqi_table'))),
         # AQI forecast paragraph
         column(6, p(div("Today's Forecast:",style = "color:blue"), textOutput('aqi_text')))
 ),
@@ -422,7 +422,7 @@ ui <- fluidPage(
 
     fluidRow(
         # ADI data table
-        column(8, wellPanel(DT::dataTableOutput('adi_table')),offset = 2),
+        column(8, wellPanel(tableOutput('adi_table')),offset = 2),
         ),    
   
     # the reference links on the bottom of AQI forecast
