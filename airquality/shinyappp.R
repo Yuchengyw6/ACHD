@@ -293,19 +293,35 @@ sixout<-function(x){
   } else print("Strong")
 }
 
-# current date for report
+
+# generate current system time for report's title
 currentDate <- Sys.Date()
 title <- paste("Air Quality Forecast and Dispersion Outlook of Allegheny County, Pennsylvania for", as.character(currentDate))
 
 # AQI
+# define the conditions for AQI
+aqi_index<-function(x){
+  if (x>=0 & x<=50){
+    "Good"
+  } else if (x>=51 & x<=100){
+    "Moderate"
+  } else if (x>=101 & x<=150){
+    "Unhealthy for Sensitive Groups"
+  } else "Unhealthy" 
+}
+
+# integrate the scraped data for Air Quality Forecast table
 aqi <- data.frame(
     "Forecast Period"= c("Today","Tomorrow"),
-    "Pittsburgh Area"=c(todaypitt,tomorrowpitt),
-    "Liberty-Clairton Area"=c(todayLC,tomorrowLC))
+    "Pittsburgh Area"=c(aqi_index(todaypitt),aqi_index(tomorrowpitt)),
+    "Liberty-Clairton Area"=c(aqi_index(todayLC),aqi_index(tomorrowLC))
+    )
 
+# the paragraph on the righ side of Air Quality Forecast table
 aqi_forecast <- todayforecast[1]
 
 # ADI
+# integrate the data scraped into ACHD Air Dispersion 36-Hour Forecast table
 adi <- data.frame(
     "Forecast Period" = c("Today Morning","Today Afternoon", "Tonight Evening", 
                          "Tonight Overnight", "Tomorrow Morning", "Tomorrow Afternoon"),
@@ -317,21 +333,34 @@ adi <- data.frame(
 
 
 
-
+## Here we start building our shiny app
 # Define server for data output
 server <- function(input, output) {
     
-    # define thw title
+    # define the title output
     output$title <- renderText(title)
     
-    # define the data table for AQI
-    output$aqi_table <- renderTable(aqi)
+    # define the data table outpu for AQI
+    output$aqi_table <- DT::renderDataTable({
+      # set backgroung color conditions and return the aqi table
+      return(datatable(aqi) %>%
+               formatStyle('Pittsburgh.Area', 
+                           backgroundColor = styleEqual(c("Good","Moderate","Unhealthy for Sensitive Groups","Unhealthy"),
+                                                        c("green","yellow","orange","red"))
+               ) %>%
+               formatStyle('Liberty.Clairton.Area', 
+                           backgroundColor = styleEqual(c("Good","Moderate","Unhealthy for Sensitive Groups","Unhealthy"),
+                                                        c("green","yellow","orange","red"))
+               )
+          )
+    })
+    # define the paragraph output for AQI
     output$aqi_text <- renderText(aqi_forecast)
     
-    # define the data table for ADI
+    # define the data table output for ADI
     output$adi_table <- renderTable(adi)
     
-    # define the inversion report
+    # define the inversion report output
     output$inversion_line1 <- renderText({
       HTML(paste0("</b>","This morning’s surface inversion of ","<b>", temp5,
                   "</b>"," with a depth of ","<b>",depth5,"</b>",
@@ -364,16 +393,19 @@ ui <- fluidPage(
     on PM2.5 or Ozone, whichever is forecasted to be higher.")),
     
     fluidRow(
+        # AQI data table
         column(6, wellPanel(tableOutput('aqi_table'))),
+        # AQI forecast paragraph
         column(6, p(div("Today's Forecast:",style = "color:blue"), textOutput('aqi_text')))
 ),
     
     fluidRow(
+        # the reference link on the bottom of AQI forecast
         column(6, "See Page 2 for the Air Quality Index guide"),
         column(6, a("Data provided by the PA Department of Environmental Protection", 
                     href="https://www.ahs.dep.pa.gov/AQPartnersWeb/forecast_home.aspx"))
 ),
-
+    # space between 2 parts of the report
     br(),
     br(),
 
@@ -387,33 +419,39 @@ ui <- fluidPage(
     can improve air quality."))),
 
     fluidRow(
+        # ADI data table
         column(8, wellPanel(tableOutput('adi_table')),offset = 2),
         ),    
-
+  
+    # the reference links on the bottom of AQI forecast
     p("Data provided by the National Weather Service (NWS) ",
       a("Fire Weather Planning Forecast", 
         href = "https://forecast.weather.gov/product.php?site=NWS&product=FWF&issuedby=PBZ"),
       "and",
       a("PIT NWS Products", 
         href = "http://weather.uwyo.edu/upperair/sounding.html")),
-
+  
+    # space between 2 parts of the report
     br(),
     br(),
 
-# guide for ADI and AQI
+    # insert guide pictures for ADI and AQI
     div(img(src = "guide.png", height = 400, width = 800), style="text-align: center;"),
-
+    
+    # space between 2 parts of the report
     br(),
     br(),
 
-# air quality forecast
+    # air quality forecast
     p(h4(div("ACHD Surface Temperature Inversion Report:",style = "color:blue")), 
     h5("This is the 7 AM surface-based temperature inversion report for Allegheny County.")),
-
+    
+    # paragraph output for air quality forecast
     uiOutput(outputId = "inversion_line1"),
     uiOutput(outputId = "inversion_line2"),
     uiOutput(outputId = "inversion_line3"),
-
+  
+  # space between 2 parts of the report
   br(),
   br(),
   
@@ -423,7 +461,6 @@ ui <- fluidPage(
     
 )
 
-page5
 # Preview the UI in the console
 shinyApp(ui, server)
 
