@@ -4,6 +4,8 @@
 
 library(shiny)
 library(shinydashboard)
+library(DT)
+library(stringr)
 library(tidyverse)
 library(rvest)
 library(robotstxt)
