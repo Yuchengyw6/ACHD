@@ -107,7 +107,7 @@ m<-as.character(format(times,"%m")) # Extract and store the month value
 d<-as.character(format(times,"%d")) # Extract and store the day value
 h<-as.character(format(times,"%H")) # Extract and store the hour value
 
-if (h>=4 & h<12){
+if (as.numeric(h)>=4 & as.numeric(h)<12){
   link4<-"https://forecast.weather.gov/product.php?site=NWS&product=FWF&issuedby=PBZ"
 } else {
   link4<-"https://forecast.weather.gov/product.php?site=NWS&issuedby=PBZ&product=FWF&format=CI&version=2&glossary=0"
@@ -191,7 +191,7 @@ tomorrowafternoon<-paste(altomdesc,"-",altomvalue)
 # Data is scaraped here to calculate the Inversion Strength and Inversion Depths for the day
 # Website is updated at 7AM every day
 
-if (h<8){
+if (as.numeric(h)<8){
   yesterday<-strptime(as.Date(Sys.Date())-1,"%Y-%m-%d") # Using yesterday's date if website hasn't updated yet
   y5<-as.character(format(yesterday,"%Y"))
   m5<-as.character(format(yesterday,"%m"))
@@ -262,10 +262,10 @@ inversion5 <- upperinversion()
 # Used to calculate the Inversion Strength for the next day
 # Website is updated at 7AM every day 
 
-if (h<8){
-  link6<-paste("https://rucsoundings.noaa.gov/get_soundings.cgi?data_source=GFS&start_year=",y,"&start_month_name=",month.abb[as.numeric(m)],"&start_mday=",as.numeric(d)+1,"&start_hour=12&start_min=0&n_hrs=1&fcst_len=shortest&airport=PIT&text=Ascii%20text%20%28GSL%20format%29&hydrometeors=false&startSecs=",as.numeric(as.POSIXct(Sys.Date()))+30000,"&endSecs=",as.numeric(as.POSIXct(Sys.Date()))+33600,sep="") # Link with the system's year, month, day, and epoch times
+if (as.numeric(h)<8){
+  link6<-paste("https://rucsoundings.noaa.gov/get_soundings.cgi?data_source=GFS&start_year=",y,"&start_month_name=",month.abb[as.numeric(m)],"&start_mday=",as.numeric(d),"&start_hour=12&start_min=0&n_hrs=1&fcst_len=shortest&airport=PIT&text=Ascii%20text%20%28GSL%20format%29&hydrometeors=false&startSecs=",as.numeric(as.POSIXct(Sys.Date()))+30000,"&endSecs=",as.numeric(as.POSIXct(Sys.Date()))+33600,sep="") # Link with the system's year, month, day, and epoch times
 } else {
-  link6<-paste("https://rucsoundings.noaa.gov/get_soundings.cgi?data_source=GFS&start_year=",y,"&start_month_name=",month.abb[as.numeric(m)],"&start_mday=",as.numeric(d)+1,"&start_hour=12&start_min=0&n_hrs=1&fcst_len=shortest&airport=PIT&text=Ascii%20text%20%28GSL%20format%29&hydrometeors=false&startSecs=",as.numeric(as.POSIXct(Sys.Date()+1))+30000,"&endSecs=",as.numeric(as.POSIXct(Sys.Date()+1))+33600,sep="")
+  link6<-paste("https://rucsoundings.noaa.gov/get_soundings.cgi?data_source=GFS&start_year=",y,"&start_month_name=",month.abb[as.numeric(m)],"&start_mday=",as.numeric(d)+1,"&start_hour=12&start_min=0&n_hrs=1&fcst_len=shortest&airport=PIT&text=Ascii%20text%20%28GSL%20format%29&hydrometeors=false&startSecs=",as.numeric(as.POSIXct(Sys.Date()+1))+43200,"&endSecs=",as.numeric(as.POSIXct(Sys.Date()+1))+46800,sep="")
 }
 
 page6<-read_html(link6) # Read link
@@ -273,11 +273,9 @@ table6<-page6 %>% # Select nodes with the needed data which is the full table
   html_nodes("p") %>%
   html_text()
 
-sixextracttoprow<-str_extract_all(table6,'9\\s{2}10000.{1,}') # Extract the first row which starts with a 9
-sixremainingrows<-str_extract_all(table6,'4\\s{1,}.{1,}') # Extract the remaining rows which all start with a 4
-sixremainingrows<-sixremainingrows[[1]][-1] # Remove the first row containing new line characters
-unsplitsix<-c(sixextracttoprow,sixremainingrows) # Combine the "9" row with the "4" rows
-splitsix<-str_extract_all(unsplitsix,'-\\d{1,}|\\d{1,}') # Separate all numbers into their own entries
+sixextract<-str_extract_all(table6,'\\d.{1,}') # Remove all new line characters
+sixrows<-sixextract[[1]][-c(1:6)] # Remove first 6 rows since important data starts on row 7
+splitsix<-str_extract_all(sixrows,'-\\d{1,}|\\d{1,}') # Separate all numbers into their own entries
 type<-lapply(splitsix,`[[`,1) # Label first column as "Type"
 pressure<-lapply(splitsix,`[[`,2) # Label second column as "Pressure"
 height<-lapply(splitsix,`[[`,3) # Label third column as "Height"
