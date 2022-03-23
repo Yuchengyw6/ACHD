@@ -101,8 +101,19 @@ tomorrowafternoonwind = paste(p4_2[7,8],p4_2[6,8],sep=" - ")
 # Website 4 - Air Dispersion Index
 # For this website, the numbers in the first three columns of the first table after the "ADI Early" and "ADI Late" rows will be scraped
 # These consist of a number and a description
+times<-strptime(Sys.time(),"%Y-%m-%d %H:%M:%S") # Extract the system date and time
+y<-as.character(format(times,"%Y")) # Extract and store the year value
+m<-as.character(format(times,"%m")) # Extract and store the month value
+d<-as.character(format(times,"%d")) # Extract and store the day value
+h<-as.character(format(times,"%H")) # Extract and store the hour value
 
-page4<-read_html("https://forecast.weather.gov/product.php?site=NWS&product=FWF&issuedby=PBZ") # Read in website link
+if (h>=4 & h<12){
+  link4<-"https://forecast.weather.gov/product.php?site=NWS&product=FWF&issuedby=PBZ"
+} else {
+  link4<-"https://forecast.weather.gov/product.php?site=NWS&issuedby=PBZ&product=FWF&format=CI&version=2&glossary=0"
+}
+
+page4<-read_html(link4) # Read in correct website link
 table4<-page4 %>% # Select the node containing the data, in  this case, all of the tables on the site will be scraped at once
   html_nodes(".glossaryProduct") %>%
   html_text()
@@ -180,14 +191,17 @@ tomorrowafternoon<-paste(altomdesc,"-",altomvalue)
 # Data is scaraped here to calculate the Inversion Strength and Inversion Depths for the day
 # Website is updated at 7AM every day
 
-times<-strptime(Sys.Date(),"%Y-%m-%d") # Extract the system date
-y<-as.character(format(times,"%Y")) # Extract and store the year value
-m<-as.character(format(times,"%m")) # Extract and store the month value
-d<-as.character(format(times,"%d")) # Extraxt and store the day value
+if (h<8){
+  yesterday<-strptime(as.Date(Sys.Date())-1,"%Y-%m-%d") # Using yesterday's date if website hasn't updated yet
+  y5<-as.character(format(yesterday,"%Y"))
+  m5<-as.character(format(yesterday,"%m"))
+  d5<-as.character(format(yesterday,"%d")) 
+  link5<-paste("http://weather.uwyo.edu/cgi-bin/sounding?region=naconf&TYPE=TEXT%3ALIST&YEAR=",y5,"&MONTH=",m5,"&FROM=",d5,"12&TO=",d5,"12&STNM=72520",sep="") # Place the year, month, and day values into the link to get the data for the day
+} else {
+  link5<-paste("http://weather.uwyo.edu/cgi-bin/sounding?region=naconf&TYPE=TEXT%3ALIST&YEAR=",y,"&MONTH=",m,"&FROM=",d,"12&TO=",d,"12&STNM=72520",sep="")
+}
 
-link<-paste("http://weather.uwyo.edu/cgi-bin/sounding?region=naconf&TYPE=TEXT%3ALIST&YEAR=",y,"&MONTH=",m,"&FROM=",d,"12&TO=",d,"12&STNM=72520",sep="") # Place the year, month, and day values into the link to get the data for the day
-
-page5<-read_html(link) # Read link
+page5<-read_html(link5) # Read link
 table5<-page5 %>% # Extract the node containing the data, which is the whole table in this case
   html_nodes("pre:nth-child(2)") %>%
   html_text()
@@ -211,15 +225,18 @@ inversiondepth<-five[which(tempdiff<0),2][1]-five[,2][1] # Take the height of th
 
 fivestrength<-function(x){ # Create a description value for how strong the Surface Inversion Strength is based on its value
   if (x==0){
-    print("None")
+    return("None")
   } else if (x>0 & x<1){
-    print("Slight")
+    return("Slight")
   } else if (x>=1 & x<3){
-    print("Weak")
+    return("Weak")
   } else if (x>=3 & x<5){
-    print("Moderate")
-  } else print("Strong")
+    return("Moderate")
+  } else return("Strong")
 }
+
+## To Calculate Break Time
+breaktemp<-(((inversiondepth/100)+five[which(tempdiff<0),3][1])*9/5)+32 # Take this number and match it to the weather forecast. The time of day when this temperature is reached is the break time.
 
 ## Calculations for Surface Inversion Breaks
 temp5 <- paste(round(surfaceinversion,1),"°C")
@@ -235,8 +252,8 @@ f<-diff(e) # Make second differenced list
 g<-which(f>1) # Find any values greater than 1
 upperinversion<-function(){ # Function to detect any inversion that is not a surface inversion and print "Yes" or "No"
   if (is.na(tempdiffunder1k[e[g[1]+1]])){
-    print("No upper inversion starting below ~1000 m is reported")
-  } else print("Yes, an upper inversion starting below ~1000 m is reported")
+    return("No upper inversion starting below ~1000 m is reported")
+  } else return("Yes, an upper inversion starting below ~1000 m is reported")
 }
 
 inversion5 <- upperinversion()
@@ -245,7 +262,11 @@ inversion5 <- upperinversion()
 # Used to calculate the Inversion Strength for the next day
 # Website is updated at 7AM every day 
 
-link6<-paste("https://rucsoundings.noaa.gov/get_soundings.cgi?data_source=GFS&start_year=",y,"&start_month_name=",month.abb[as.numeric(m)],"&start_mday=",as.numeric(d)+1,"&start_hour=12&start_min=0&n_hrs=1&fcst_len=shortest&airport=PIT&text=Ascii%20text%20%28GSL%20format%29&hydrometeors=false&startSecs=",as.numeric(as.POSIXct(Sys.Date()+1))+30000,"&endSecs=",as.numeric(as.POSIXct(Sys.Date()+1))+33600,sep="") # Link with the system's year, month, day, and epoch times
+if (h<8){
+  link6<-paste("https://rucsoundings.noaa.gov/get_soundings.cgi?data_source=GFS&start_year=",y,"&start_month_name=",month.abb[as.numeric(m)],"&start_mday=",as.numeric(d)+1,"&start_hour=12&start_min=0&n_hrs=1&fcst_len=shortest&airport=PIT&text=Ascii%20text%20%28GSL%20format%29&hydrometeors=false&startSecs=",as.numeric(as.POSIXct(Sys.Date()))+30000,"&endSecs=",as.numeric(as.POSIXct(Sys.Date()))+33600,sep="") # Link with the system's year, month, day, and epoch times
+} else {
+  link6<-paste("https://rucsoundings.noaa.gov/get_soundings.cgi?data_source=GFS&start_year=",y,"&start_month_name=",month.abb[as.numeric(m)],"&start_mday=",as.numeric(d)+1,"&start_hour=12&start_min=0&n_hrs=1&fcst_len=shortest&airport=PIT&text=Ascii%20text%20%28GSL%20format%29&hydrometeors=false&startSecs=",as.numeric(as.POSIXct(Sys.Date()+1))+30000,"&endSecs=",as.numeric(as.POSIXct(Sys.Date()+1))+33600,sep="")
+}
 
 page6<-read_html(link6) # Read link
 table6<-page6 %>% # Select nodes with the needed data which is the full table
@@ -275,14 +296,14 @@ inversiondepth2<-as.numeric(six[which(tempdiff<0),3][[1]])-as.numeric(unlist(six
 
 sixout<-function(x){ # Create a description value for how strong the Surface Inversion Strength is based on its value
   if (x==0){
-    print("None")
+    return("None")
   } else if (x>0 & x<1){
-    print("Slight")
+    return("Slight")
   } else if (x>=1 & x<3){
-    print("Weak")
+    return("Weak")
   } else if (x>=3 & x<5){
-    print("Moderate")
-  } else print("Strong")
+    return("Moderate")
+  } else return("Strong")
 }
 
 # current date for report
