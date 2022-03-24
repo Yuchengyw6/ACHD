@@ -1,14 +1,6 @@
 #
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
-install.packages("shiny")
-install.packages("shinydashboard")
-install.packages("tidyverse")
-install.packages("rvest")
-install.packages("robotstxt")
-install.packages("lubridate")
-install.packages("stringr")
-install.packages("jsonlite")
 
 library(shiny)
 library(shinydashboard)
@@ -214,58 +206,67 @@ table5<-page5 %>% # Extract the node containing the data, which is the whole tab
   html_nodes("pre:nth-child(2)") %>%
   html_text()
 
-fiveextract<-str_extract_all(table5,'\\n.{22}') # Extracts and splits each row of data
-fivenum<-fiveextract[[1]][-c(1:4)] # Removes the first four rows
-digits<-trimws(substr(fivenum,3,22),which=c("left")) # Removes the new line characters at the start and any whitespace characters
-digitssplit<-str_extract_all(digits,'.{1}\\d{1,}.{1}\\d|\\d{1,}.{1}\\d') # Splits the numbers in each row
-pressure<-lapply(digitssplit,`[[`,1) # Label first column values as "pressure"
-height<-lapply(digitssplit,`[[`,2) # Label second column values as "height"
-digitssplit[[1]][3]<-"" # Add an empty string for the third entry in third column since it's not present
-temperature<-lapply(digitssplit,`[[`,3) # Label third column values as "temperature" 
-five<-cbind(as.numeric(pressure),as.numeric(height),as.numeric(temperature)) # Combine these variables into a new data frame
-colnames(five)<-c("Pressure (hPa)","Height (m)","Temperature (C)") # Add names to each column with their units of measurement
-five<-five[-1,] # Remove first row, since it has no temperature value
-
-# Calculation for Surface Inversion Strength and Inversion Depth
-tempdiff<-diff(five[,3]) # Create a differenced list of the temperature column, each entry subtracted from the next
-surfaceinversion<-five[which(tempdiff<0),3][1]-five[,3][1] # If the temperature increases as height increases, take the peak temperature and subtract it from the surface temperature to get Surface Inversion Strength
-inversiondepth<-five[which(tempdiff<0),2][1]-five[,2][1] # Take the height of the peak temperature and subtract the surface height (359 m) to get Inversion Depth
-
-fivestrength<-function(x){ # Create a description value for how strong the Surface Inversion Strength is based on its value
-  if (x==0){
-    return("None")
-  } else if (x>0 & x<1){
-    return("Slight")
-  } else if (x>=1 & x<3){
-    return("Weak")
-  } else if (x>=3 & x<5){
-    return("Moderate")
-  } else return("Strong")
-}
-
-## To Calculate Break Time
-breaktemp<-(((inversiondepth/100)+five[which(tempdiff<0),3][1])*9/5)+32 # Take this number and match it to the weather forecast. The time of day when this temperature is reached is the break time.
-
-## Calculations for Surface Inversion Breaks
-temp5 <- paste(round(surfaceinversion,1),"°C")
-depth5 <- paste((inversiondepth),"m")
-time5 <- "9am" 
-scale5<- fivestrength(surfaceinversion)
-
-# Determining if there are any upper inversions
-sentence<-five[which(five[,2]<1000),] # Take all temperature values below 1000 m
-tempdiffunder1k<-diff(sentence[,3]) # Make differenced list
-e<-which(tempdiffunder1k<0) # Find any differences less than 0
-f<-diff(e) # Make second differenced list
-g<-which(f>1) # Find any values greater than 1
-upperinversion<-function(){ # Function to detect any inversion that is not a surface inversion and print "Yes" or "No"
-  if (is.na(tempdiffunder1k[e[g[1]+1]])){
-    return("No upper inversion starting below ~1000 m is reported")
-  } else return("Yes, an upper inversion starting below ~1000 m is reported")
+if (is_empty(table5)==FALSE){
+  fiveextract<-str_extract_all(table5,'\\n.{22}') # Extracts and splits each row of data
+  fivenum<-fiveextract[[1]][-c(1:4)] # Removes the first four rows
+  digits<-trimws(substr(fivenum,3,22),which=c("left")) # Removes the new line characters at the start and any whitespace characters
+  digitssplit<-str_extract_all(digits,'.{1}\\d{1,}.{1}\\d|\\d{1,}.{1}\\d') # Splits the numbers in each row
+  pressure<-lapply(digitssplit,`[[`,1) # Label first column values as "pressure"
+  height<-lapply(digitssplit,`[[`,2) # Label second column values as "height"
+  digitssplit[[1]][3]<-"" # Add an empty string for the third entry in third column since it's not present
+  temperature<-lapply(digitssplit,`[[`,3) # Label third column values as "temperature" 
+  five<-cbind(as.numeric(pressure),as.numeric(height),as.numeric(temperature)) # Combine these variables into a new data frame
+  colnames(five)<-c("Pressure (hPa)","Height (m)","Temperature (C)") # Add names to each column with their units of measurement
+  five<-five[-1,] # Remove first row, since it has no temperature value
+  
+  # Calculation for Surface Inversion Strength and Inversion Depth
+  tempdiff<-diff(five[,3]) # Create a differenced list of the temperature column, each entry subtracted from the next
+  surfaceinversion<-five[which(tempdiff<0),3][1]-five[,3][1] # If the temperature increases as height increases, take the peak temperature and subtract it from the surface temperature to get Surface Inversion Strength
+  inversiondepth<-five[which(tempdiff<0),2][1]-five[,2][1] # Take the height of the peak temperature and subtract the surface height (359 m) to get Inversion Depth
+  
+  fivestrength<-function(x){ # Create a description value for how strong the Surface Inversion Strength is based on its value
+    if (x==0){
+      return("None")
+    } else if (x>0 & x<1){
+      return("Slight")
+    } else if (x>=1 & x<3){
+      return("Weak")
+    } else if (x>=3 & x<5){
+      return("Moderate")
+    } else return("Strong")
+  }
+  
+  ## To Calculate Break Time
+  breaktemp<-(((inversiondepth/100)+five[which(tempdiff<0),3][1])*9/5)+32 # Take this number and match it to the weather forecast. The time of day when this temperature is reached is the break time.
+  
+  ## Calculations for Surface Inversion Breaks
+  temp5 <- paste(round(surfaceinversion,1),"°C")
+  depth5 <- paste((inversiondepth),"m")
+  time5 <- "9am" 
+  scale5<- fivestrength(surfaceinversion)
+  
+  # Determining if there are any upper inversions
+  sentence<-five[which(five[,2]<1000),] # Take all temperature values below 1000 m
+  tempdiffunder1k<-diff(sentence[,3]) # Make differenced list
+  e<-which(tempdiffunder1k<0) # Find any differences less than 0
+  f<-diff(e) # Make second differenced list
+  g<-which(f>1) # Find any values greater than 1
+  upperinversion<-function(){ # Function to detect any inversion that is not a surface inversion and print "Yes" or "No"
+    if (is.na(tempdiffunder1k[e[g[1]+1]])){
+      return("No upper inversion starting below ~1000 m is reported")
+    } else return("Yes, an upper inversion starting below ~1000 m is reported")
 }
 
 inversion5 <- upperinversion()
-
+} else {
+  surfaceinversion<-"--"
+  inversiondepth<-"--"
+  inversion5<-"--"
+  temp5<-paste("--","°C")
+  depth5<-paste("--","m")
+  time5<-"--"
+  scale5<-"--"
+}
 # Website 6
 # Used to calculate the Inversion Strength for the next day
 # Website is updated at 7AM every day 
