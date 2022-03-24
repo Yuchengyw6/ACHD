@@ -1,6 +1,14 @@
 #
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
+install.packages("shiny")
+install.packages("shinydashboard")
+install.packages("tidyverse")
+install.packages("rvest")
+install.packages("robotstxt")
+install.packages("lubridate")
+install.packages("stringr")
+install.packages("jsonlite")
 
 library(shiny)
 library(shinydashboard)
