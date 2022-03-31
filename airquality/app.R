@@ -196,14 +196,14 @@ if (as.numeric(h)<8){
   y5<-as.character(format(yesterday,"%Y"))
   m5<-as.character(format(yesterday,"%m"))
   d5<-as.character(format(yesterday,"%d")) 
-  link5<-paste("http://weather.uwyo.edu/cgi-bin/sounding?region=naconf&TYPE=TEXT%3ALIST&YEAR=",y5,"&MONTH=",m5,"&FROM=",d5,"12&TO=",d5,"12&STNM=72520",sep="") # Place the year, month, and day values into the link to get the data for the day
+  link5<-paste("http://weather.uwyo.edu/cgi-bin/sounding?region=naconf&TYPE=TEXT%3ALIST&YEAR=",y5,"&MONTH=",m5,"&FROM=",d5,"00&TO=",d5,"00&STNM=72520",sep="") # Place the year, month, and day values into the link to get the data for the day
 } else {
-  link5<-paste("http://weather.uwyo.edu/cgi-bin/sounding?region=naconf&TYPE=TEXT%3ALIST&YEAR=",y,"&MONTH=",m,"&FROM=",d,"12&TO=",d,"12&STNM=72520",sep="")
+  link5<-paste("http://weather.uwyo.edu/cgi-bin/sounding?region=naconf&TYPE=TEXT%3ALIST&YEAR=",y,"&MONTH=",m,"&FROM=",d,"00&TO=",d,"00&STNM=72520",sep="")
 }
 
 page5<-read_html(link5) # Read link
 table5<-page5 %>% # Extract the node containing the data, which is the whole table in this case
-  html_nodes("pre:nth-child(2)") %>%
+  html_nodes("pre") %>%
   html_text()
 
 fivestrength<-function(x){ # Create a description value for how strong the Surface Inversion Strength is based on its value
