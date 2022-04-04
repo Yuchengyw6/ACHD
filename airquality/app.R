@@ -314,61 +314,60 @@ inversion5 <- upperinversion()
     table5<-page5 %>% # Extract the node containing the data, which is the whole table in this case
       html_nodes("p") %>%
       html_text()
-}
-
-if(is_empty(table5)==FALSE){
-  fiveextract<-str_extract_all(table5,'\\d.{1,}') # Remove all new line characters
-  fiverows<-fiveextract[[1]][-c(1:6)] # Remove first 6 rows since important data starts on row 7
-  splitfive<-str_extract_all(fiverows,'-\\d{1,}|\\d{1,}') # Separate all numbers into their own entries
-  type<-lapply(splitfive,`[[`,1) # Label first column as "Type"
-  pressure<-lapply(splitfive,`[[`,2) # Label second column as "Pressure"
-  height<-lapply(splitfive,`[[`,3) # Label third column as "Height"
-  temp<-lapply(splitfive,`[[`,4) # Label fourth column as "temp"
-  dewpoint<-lapply(splitfive,`[[`,5) # Label fifth column as "Dewpoint"
-  winddirection<-lapply(splitfive,`[[`,6) # Label sixth column as "Wind Direction"
-  windspeed<-lapply(splitfive,`[[`,7) # Label seventh column as "Wind Speed"
-  
-  # Create data frame with all the columns combined. Some columns need their data modified by dividing by 10
-  five<-as.data.frame(cbind(type,as.numeric(pressure)/10,height,as.numeric(temp)/10,as.numeric(dewpoint)/10,winddirection,windspeed)) 
-  
-  colnames(five)<-c("Type","Pressure (mb)","Height (m)","Temperature (C)","Dew Point (C)","Wind Direction (Degrees)","Wind Speed (Knots)") # Give each column their names and units
-  tempdifffive<-diff(unlist(five[,4])) # Create a differenced list of the temperature column, each entry subtracted from the next
-  surfaceinversion<-five[which(tempdifffive<0),4][[1]]-unlist(five[,4])[1] # If the temperature increases as height increases, take the peak temperature and subtract it from the surface temperature to get Surface Inversion Strength
-  unlistedfivetemp<-unlist(five[,4])
-  unlistedfiveheight<-unlist(five[,3])
-  uniquetempdiff<-diff(unique(unlistedfivetemp))
-  negativetempdiff<-which(uniquetempdiff<0)
-  matchedtempdiff<-unique(unlistedfivetemp)[negativetempdiff]
-  inversiondepth<-as.numeric(five[which(matchedtempdiff%in%unique(unlistedfivetemp))[negativetempdiff],3][1])-as.numeric(five[,3][1]) # Take the height of the peak temperature and subtract the surface height (359 m) to get Inversion Depth
-  
-  breaktemp<-(((inversiondepth/100)+five[which(tempdifffive<0),4][[1]])*9/5)+32 # Take this number and match it to the weather forecast. The time of day when this temperature is reached is the break time.
-  
-  # Determining if there are any upper inversions
-  sentence<-five[which(five[,3]<1000),] # Take all temperature values below 1000 m
-  tempdiffunder1k<-diff(unlist(sentence[,4])) # Make differenced list
-  e<-which(tempdiffunder1k<0) # Find any differences less than 0
-  f<-diff(e) # Make second differenced list
-  g<-which(f>1) # Find any values greater than 1
-  upperinversion<-function(){ # Function to detect any inversion that is not a surface inversion and print "Yes" or "No"
-    if (is.na(tempdiffunder1k[e[g[1]+1]])){
-      return("No upper inversion starting below ~1000 m is reported")
-    } else return("Yes, an upper inversion starting below ~1000 m is reported")
-  }
-  temp5 <- paste(round(surfaceinversion,1),"°C")
-  depth5 <- paste((inversiondepth),"m")
-  time5 <- "9am"
-  scale5<- fivestrength(surfaceinversion)
-  mode<-"forecast"
-  inversion5<-upperinversion()
-} else{
-  surfaceinversion<-"--"
-  inversiondepth<-"--"
-  inversion5<-"--"
-  temp5<-paste("--","°C")
-  depth5<-paste("--","m")
-  time5<-"--"
-  scale5<-"--"
-  mode<-"N/A because data could not be collected today"
+    if(is_empty(table5)==FALSE){
+      fiveextract<-str_extract_all(table5,'\\d.{1,}') # Remove all new line characters
+      fiverows<-fiveextract[[1]][-c(1:6)] # Remove first 6 rows since important data starts on row 7
+      splitfive<-str_extract_all(fiverows,'-\\d{1,}|\\d{1,}') # Separate all numbers into their own entries
+      type<-lapply(splitfive,`[[`,1) # Label first column as "Type"
+      pressure<-lapply(splitfive,`[[`,2) # Label second column as "Pressure"
+      height<-lapply(splitfive,`[[`,3) # Label third column as "Height"
+      temp<-lapply(splitfive,`[[`,4) # Label fourth column as "temp"
+      dewpoint<-lapply(splitfive,`[[`,5) # Label fifth column as "Dewpoint"
+      winddirection<-lapply(splitfive,`[[`,6) # Label sixth column as "Wind Direction"
+      windspeed<-lapply(splitfive,`[[`,7) # Label seventh column as "Wind Speed"
+      
+      # Create data frame with all the columns combined. Some columns need their data modified by dividing by 10
+      five<-as.data.frame(cbind(type,as.numeric(pressure)/10,height,as.numeric(temp)/10,as.numeric(dewpoint)/10,winddirection,windspeed)) 
+      
+      colnames(five)<-c("Type","Pressure (mb)","Height (m)","Temperature (C)","Dew Point (C)","Wind Direction (Degrees)","Wind Speed (Knots)") # Give each column their names and units
+      tempdifffive<-diff(unlist(five[,4])) # Create a differenced list of the temperature column, each entry subtracted from the next
+      surfaceinversion<-five[which(tempdifffive<0),4][[1]]-unlist(five[,4])[1] # If the temperature increases as height increases, take the peak temperature and subtract it from the surface temperature to get Surface Inversion Strength
+      unlistedfivetemp<-unlist(five[,4])
+      unlistedfiveheight<-unlist(five[,3])
+      uniquetempdiff<-diff(unique(unlistedfivetemp))
+      negativetempdiff<-which(uniquetempdiff<0)
+      matchedtempdiff<-unique(unlistedfivetemp)[negativetempdiff]
+      inversiondepth<-as.numeric(five[which(matchedtempdiff%in%unique(unlistedfivetemp))[negativetempdiff],3][1])-as.numeric(five[,3][1]) # Take the height of the peak temperature and subtract the surface height (359 m) to get Inversion Depth
+      
+      breaktemp<-(((inversiondepth/100)+five[which(tempdifffive<0),4][[1]])*9/5)+32 # Take this number and match it to the weather forecast. The time of day when this temperature is reached is the break time.
+      
+      # Determining if there are any upper inversions
+      sentence<-five[which(five[,3]<1000),] # Take all temperature values below 1000 m
+      tempdiffunder1k<-diff(unlist(sentence[,4])) # Make differenced list
+      e<-which(tempdiffunder1k<0) # Find any differences less than 0
+      f<-diff(e) # Make second differenced list
+      g<-which(f>1) # Find any values greater than 1
+      upperinversion<-function(){ # Function to detect any inversion that is not a surface inversion and print "Yes" or "No"
+        if (is.na(tempdiffunder1k[e[g[1]+1]])){
+          return("No upper inversion starting below ~1000 m is reported")
+        } else return("Yes, an upper inversion starting below ~1000 m is reported")
+      }
+      temp5 <- paste(round(surfaceinversion,1),"°C")
+      depth5 <- paste((inversiondepth),"m")
+      time5 <- "9am"
+      scale5<- fivestrength(surfaceinversion)
+      mode<-"forecast"
+      inversion5<-upperinversion()
+    } else{
+      surfaceinversion<-"--"
+      inversiondepth<-"--"
+      inversion5<-"--"
+      temp5<-paste("--","°C")
+      depth5<-paste("--","m")
+      time5<-"--"
+      scale5<-"--"
+      mode<-"N/A because data could not be collected today"
+    }
 }
 # Website 6
 # Used to calculate the Inversion Strength for the next day
