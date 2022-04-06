@@ -182,6 +182,16 @@ if(is_empty(table4)==FALSE){
   altomvalue<-str_extract(adilatetomorrow,'\\d{1,2}')
   altomdesc<-str_extract(adilatetomorrow,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}'))
   
+  if(is.na(adiearlytomorrow)){
+    aetomvalue<-0
+    aetomdesc<-"Very Poor"
+  }
+  
+  if(is.na(adilatetomorrow)){
+    altomvalue<-0
+    aetomdesc<-"Very Poor"
+  }
+  
   # These if-else statements change the descriptions of the ADIs if they are "Gen Poor" or "Gen Good" to "Generally Poor" or "Generally Good"
   if(aetoddesc=="Gen Poor"){
     aetoddesc<-"Generally Poor"
