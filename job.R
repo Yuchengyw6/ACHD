@@ -179,27 +179,27 @@ if(is_empty(table4)==FALSE){
   adiearly<-str_extract(table4,'ADI\\searly.{1,}') # Extract ADI Early row from the first table
   adilate<-str_extract(table4,'ADI\\slate.{1,}') # Extract ADI Late row from the first table
   # ADI Early
-  adiearlysplit<-str_extract_all(adiearly,'\\d{1,2}\\s.{1,9}') # Split the row into each number-description pair
+  adiearlysplit<-str_extract_all(adiearly,'\\d{1,}\\s.{1,9}') # Split the row into each number-description pair
   adiearlytoday<-trimws(adiearlysplit[[1]][1],whitespace=" ") # First pair is the "today" column, take the pair and remove any spaces before and after the text
-  aetodvalue<-str_extract(adiearlytoday,'\\d{1,2}') # Extracts just the number from the today pair
+  aetodvalue<-str_extract(adiearlytoday,'\\d{1,}') # Extracts just the number from the today pair
   aetoddesc<-str_extract(adiearlytoday,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}')) # Extracts the description after the today pair
   adiearlytonight<-trimws(adiearlysplit[[1]][2],whitespace=" ") # Second pair is the "tonight" column, take the pair and remove any spaces before and after the text
-  aetonvalue<-str_extract(adiearlytonight,'\\d{1,2}') # Extracts just the number from the tonight pair
+  aetonvalue<-str_extract(adiearlytonight,'\\d{1,}') # Extracts just the number from the tonight pair
   aetondesc<-str_extract(adiearlytonight,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}')) # Extracts the description after the tonight pair
   adiearlytomorrow<-trimws(adiearlysplit[[1]][3],whitespace=" ") # Third pair is the "tomorrow" column, take the pair and remove any spaces before and after the text
-  aetomvalue<-str_extract(adiearlytomorrow,'\\d{1,2}') # Extracts just the number from the tonight pair
+  aetomvalue<-str_extract(adiearlytomorrow,'\\d{1,}') # Extracts just the number from the tonight pair
   aetomdesc<-str_extract(adiearlytomorrow,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}')) # Extracts the description after the tonight pair
   
   # ADI Late
-  adilatesplit<-str_extract_all(adilate,'\\d{1,2}\\s.{1,9}') # Code here is identical to the ADI Early code, process is the same as above
+  adilatesplit<-str_extract_all(adilate,'\\d{1,}\\s.{1,9}') # Code here is identical to the ADI Early code, process is the same as above
   adilatetoday<-trimws(adilatesplit[[1]][1],whitespace=" ")
-  altodvalue<-str_extract(adilatetoday,'\\d{1,2}')
+  altodvalue<-str_extract(adilatetoday,'\\d{1,}')
   altoddesc<-str_extract(adilatetoday,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}'))
   adilatetonight<-trimws(adilatesplit[[1]][2],whitespace=" ")
-  altonvalue<-str_extract(adilatetonight,'\\d{1,2}')
+  altonvalue<-str_extract(adilatetonight,'\\d{1,}')
   altondesc<-str_extract(adilatetonight,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}'))
   adilatetomorrow<-trimws(adilatesplit[[1]][3],whitespace=" ")
-  altomvalue<-str_extract(adilatetomorrow,'\\d{1,2}')
+  altomvalue<-str_extract(adilatetomorrow,'\\d{1,}')
   altomdesc<-str_extract(adilatetomorrow,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}'))
   
   if(is.na(adiearlytomorrow)==TRUE){
