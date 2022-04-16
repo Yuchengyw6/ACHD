@@ -159,27 +159,27 @@ if(is_empty(table4)==FALSE){
   adiearly<-str_extract(table4,'ADI\\searly.{1,}') # Extract ADI Early row from the first table
   adilate<-str_extract(table4,'ADI\\slate.{1,}') # Extract ADI Late row from the first table
   # ADI Early
-  adiearlysplit<-str_extract_all(adiearly,'\\d{1,2}\\s.{1,9}') # Split the row into each number-description pair
+  adiearlysplit<-str_extract_all(adiearly,'\\d{1,}\\s.{1,9}') # Split the row into each number-description pair
   adiearlytoday<-trimws(adiearlysplit[[1]][1],whitespace=" ") # First pair is the "today" column, take the pair and remove any spaces before and after the text
-  aetodvalue<-str_extract(adiearlytoday,'\\d{1,2}') # Extracts just the number from the today pair
+  aetodvalue<-str_extract(adiearlytoday,'\\d{1,}') # Extracts just the number from the today pair
   aetoddesc<-str_extract(adiearlytoday,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}')) # Extracts the description after the today pair
   adiearlytonight<-trimws(adiearlysplit[[1]][2],whitespace=" ") # Second pair is the "tonight" column, take the pair and remove any spaces before and after the text
-  aetonvalue<-str_extract(adiearlytonight,'\\d{1,2}') # Extracts just the number from the tonight pair
+  aetonvalue<-str_extract(adiearlytonight,'\\d{1,}') # Extracts just the number from the tonight pair
   aetondesc<-str_extract(adiearlytonight,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}')) # Extracts the description after the tonight pair
   adiearlytomorrow<-trimws(adiearlysplit[[1]][3],whitespace=" ") # Third pair is the "tomorrow" column, take the pair and remove any spaces before and after the text
-  aetomvalue<-str_extract(adiearlytomorrow,'\\d{1,2}') # Extracts just the number from the tonight pair
+  aetomvalue<-str_extract(adiearlytomorrow,'\\d{1,}') # Extracts just the number from the tonight pair
   aetomdesc<-str_extract(adiearlytomorrow,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}')) # Extracts the description after the tonight pair
   
   # ADI Late
-  adilatesplit<-str_extract_all(adilate,'\\d{1,2}\\s.{1,9}') # Code here is identical to the ADI Early code, process is the same as above
+  adilatesplit<-str_extract_all(adilate,'\\d{1,}\\s.{1,9}') # Code here is identical to the ADI Early code, process is the same as above
   adilatetoday<-trimws(adilatesplit[[1]][1],whitespace=" ")
-  altodvalue<-str_extract(adilatetoday,'\\d{1,2}')
+  altodvalue<-str_extract(adilatetoday,'\\d{1,}')
   altoddesc<-str_extract(adilatetoday,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}'))
   adilatetonight<-trimws(adilatesplit[[1]][2],whitespace=" ")
-  altonvalue<-str_extract(adilatetonight,'\\d{1,2}')
+  altonvalue<-str_extract(adilatetonight,'\\d{1,}')
   altondesc<-str_extract(adilatetonight,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}'))
   adilatetomorrow<-trimws(adilatesplit[[1]][3],whitespace=" ")
-  altomvalue<-str_extract(adilatetomorrow,'\\d{1,2}')
+  altomvalue<-str_extract(adilatetomorrow,'\\d{1,}')
   altomdesc<-str_extract(adilatetomorrow,regex('[:alpha:]{1,}[:space:]{1}[:alpha:]{1,}|[:alpha:]{1,}'))
   
   if(is.na(adiearlytomorrow)==TRUE){
@@ -190,6 +190,26 @@ if(is_empty(table4)==FALSE){
   if(is.na(adilatetomorrow)==TRUE){
     altomvalue<-0
     altomdesc<-"Very Poor"
+  }
+  
+  if(is.na(adiearlytonight)==TRUE){
+    aetonvalue<-0
+    aetondesc<-"Very Poor"
+  }
+  
+  if(is.na(adilatetonight)==TRUE){
+    altonvalue<-0
+    altondesc<-"Very Poor"
+  }
+  
+  if(is.na(adiearlytoday)==TRUE){
+    aetodvalue<-0
+    aetoddesc<-"Very Poor"
+  }
+  
+  if(is.na(adilatetoday)==TRUE){
+    altodvalue<-0
+    altoddesc<-"Very Poor"
   }
   
   # These if-else statements change the descriptions of the ADIs if they are "Gen Poor" or "Gen Good" to "Generally Poor" or "Generally Good"
@@ -288,7 +308,7 @@ if (is_empty(table5)==FALSE){
   five<-five[-1,] # Remove first row, since it has no temperature value
 
 # Calculation for Surface Inversion Strength and Inversion Depth
-  tempdiff<-diff(five[,3]) # Create a differenced list of the temperature column, each entry subtracted from the next
+  tempdiff<-diff(rle(five[,3])$values) # Create a differenced list of the temperature column, each entry subtracted from the next
   surfaceinversion<-five[which(tempdiff<0),3][1]-five[,3][1] # If the temperature increases as height increases, take the peak temperature and subtract it from the surface temperature to get Surface Inversion Strength
   uniquetempdiff<-unique(tempdiff)
   negativetempdiff<-which(uniquetempdiff<0)
@@ -307,7 +327,7 @@ if (is_empty(table5)==FALSE){
 
 # Determining if there are any upper inversions
   sentence<-five[which(five[,2]<1000),] # Take all temperature values below 1000 m
-  tempdiffunder1k<-diff(sentence[,3]) # Make differenced list
+  tempdiffunder1k<-diff(rle(sentence[,3])$values) # Make differenced list
   e<-which(tempdiffunder1k<0) # Find any differences less than 0
   f<-diff(e) # Make second differenced list
   g<-which(f>1) # Find any values greater than 1
@@ -340,7 +360,7 @@ inversion5 <- upperinversion()
       five<-as.data.frame(cbind(type,as.numeric(pressure)/10,height,as.numeric(temp)/10,as.numeric(dewpoint)/10,winddirection,windspeed)) 
       
       colnames(five)<-c("Type","Pressure (mb)","Height (m)","Temperature (C)","Dew Point (C)","Wind Direction (Degrees)","Wind Speed (Knots)") # Give each column their names and units
-      tempdifffive<-diff(unlist(five[,4])) # Create a differenced list of the temperature column, each entry subtracted from the next
+      tempdifffive<-diff(rle(unlist(five[,4]))$values) # Create a differenced list of the temperature column, each entry subtracted from the next
       surfaceinversion<-five[which(tempdifffive<0),4][[1]]-unlist(five[,4])[1] # If the temperature increases as height increases, take the peak temperature and subtract it from the surface temperature to get Surface Inversion Strength
       unlistedfivetemp<-unlist(five[,4])
       unlistedfiveheight<-unlist(five[,3])
@@ -353,7 +373,7 @@ inversion5 <- upperinversion()
       
       # Determining if there are any upper inversions
       sentence<-five[which(five[,3]<1000),] # Take all temperature values below 1000 m
-      tempdiffunder1k<-diff(unlist(sentence[,4])) # Make differenced list
+      tempdiffunder1k<-diff(rle(unlist(sentence[,4]))$values) # Make differenced list
       e<-which(tempdiffunder1k<0) # Find any differences less than 0
       f<-diff(e) # Make second differenced list
       g<-which(f>1) # Find any values greater than 1
@@ -366,7 +386,7 @@ inversion5 <- upperinversion()
       depth5 <- paste((inversiondepth),"m")
       time5 <- "9am"
       scale5<- fivestrength(surfaceinversion)
-      mode<-"forecast"
+      mode<-"forecasts"
       inversion5<-upperinversion()
     } else{
       surfaceinversion<-"--"
@@ -488,7 +508,7 @@ server <- function(input, output) {
         HTML(inversion5)      
     })
       output$inversion_line4 <- renderText({
-        HTML(paste0("The data above is a ","<b>",mode,"</b>","."))      
+        HTML(paste0("The data above are ","<b>",mode,"</b>","."))      
       })
     
 }
