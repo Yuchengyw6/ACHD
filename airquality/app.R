@@ -409,10 +409,14 @@ if (as.numeric(h)<8){
   link6<-paste("https://rucsoundings.noaa.gov/get_soundings.cgi?data_source=GFS&start_year=",y,"&start_month_name=",month.abb[as.numeric(m)],"&start_mday=",as.numeric(d)+1,"&start_hour=12&start_min=0&n_hrs=1&fcst_len=shortest&airport=PIT&text=Ascii%20text%20%28GSL%20format%29&hydrometeors=false&startSecs=",as.numeric(as.POSIXct(Sys.Date()+1))+43200,"&endSecs=",as.numeric(as.POSIXct(Sys.Date()+1))+46800,sep="")
 }
 
-page6<-read_html(link6) # Read link
+page6<-tryCatch(read_html(link6),error = function(y){return(c())}) # Read link
+if (is_empty(page6)==FALSE){
 table6<-page6 %>% # Select nodes with the needed data which is the full table
   html_nodes("p") %>%
   html_text()
+} else {
+  table6<-c()
+}
 
 if(is_empty(table6)==FALSE){
   sixextract<-str_extract_all(table6,'\\d.{1,}') # Remove all new line characters
@@ -451,7 +455,9 @@ if(is_empty(table6)==FALSE){
     } else return("Strong")
   }
 } else{
-  sixout<-"--"
+  sixout<-function(x){
+    return("N/A")
+  }
 }
 
 # current date for report
